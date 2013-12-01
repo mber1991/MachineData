@@ -11,8 +11,32 @@
 	</form>
 	
 	<?php
-		if (isset($_POST["name"])) $machine = $_POST["name"];
-		if (isset($_POST["name"])) echo "<h1>" . $_POST["name"] . "</h1>";
+		if (isset($_POST["name"]))
+		{
+			$machine = $_POST["name"];
+			echo "<h1>" . $_POST["name"] . "</h1>";
+			
+			//Connect to the machine we want the information off of
+			try {
+				$objWMIService = new COM("winmgmts:\\\\" . $machine);
+				
+				//Get x86 or x64 status
+				$getArchitecture = $objWMIService->ExecQuery("Select SystemType from Win32_ComputerSystem");
+				//Modelname of the computer
+				$getModel = $objWMIService->ExecQuery("Select Model from Win32_ComputerSystem");
+				//Currently logged on users
+				$getUsers = $objWMIService->ExecQuery("Select UserName from Win32_ComputerSystem");
+				
+				
+				//Connect to the machine we want the information off of
+				$objWMIService = new COM("winmgmts:\\\\" . $machine . "\\root\cimv2") or die("Unable to connect to machine");
+				$colItems = $objWMIService->ExecQuery("Select * From Win32_NetworkAdapterConfiguration Where IPEnabled = True"); //Fetch items that will contain mac information
+				$colPrinters = $objWMIService->ExecQuery("Select * From Win32_Printer"); //Query that machine for a list of all printers
+			
+			} catch (Exception $e) {
+				exit($e->getMessage() . "\n The computer may be offline, disconnected, or typed incorrectly.");
+			}
+		}
 	?>
 	
 	<div id="info">
@@ -21,15 +45,8 @@
 				<td><b>Architecture</b></td>
 				<td>
 				<?php
-					if (isset($_POST["name"]))
-					{
-						$objWMIService = new COM("winmgmts:\\\\" . $machine) or Die ("Unable to connect to machine, rights issue?"); //Connect to the machine we want the information off of
-						$getArchitecture = $objWMIService->ExecQuery("Select SystemType from Win32_ComputerSystem");
-						foreach ($getArchitecture as $type)
-							echo $type->SystemType;
-						
-					}
-					
+					foreach ($getArchitecture as $type)
+						echo $type->SystemType;
 				?>
 				</td>
 			</tr>
@@ -37,15 +54,8 @@
 				<td><b>Model</b></td>
 				<td>
 				<?php
-					if (isset($_POST["name"]))
-					{
-						$objWMIService = new COM("winmgmts:\\\\" . $machine) or Die ("Unable to connect to machine, rights issue?"); //Connect to the machine we want the information off of
-						$getModel = $objWMIService->ExecQuery("Select Model from Win32_ComputerSystem");
-						foreach ($getModel as $type)
-							echo $type->Model;
-						
-					}
-					
+					foreach ($getModel as $type)
+						echo $type->Model;
 				?>
 				</td>
 			</tr>
@@ -58,19 +68,12 @@
 			<td><b>Description</b></td>
 		</tr>
 			<?php
-				if (isset($_POST["name"]))
-				{
-					$objWMIService = new COM("winmgmts:\\\\" . $machine . "\\root\cimv2") or Die ("Unable to connect to machine, rights issue?"); //Connect to the machine we want the information off of
-					$colItems = $objWMIService->ExecQuery("Select * From Win32_NetworkAdapterConfiguration Where IPEnabled = True"); //Fetch items that will contain mac information
-					$colPrinters = $objWMIService->ExecQuery("Select * From Win32_Printer"); //Query that machine for a list of all printers
-					
-					foreach($colItems as $value)
-					{ //Step through them all
-						echo "<tr>";
-						echo "<td>" . $value->MACaddress . "</td>";
-						echo "<td>" . $value->Description . "</td>";
-						echo "</tr>";
-					}
+				foreach($colItems as $value)
+				{ //Step through them all
+					echo "<tr>";
+					echo "<td>" . $value->MACaddress . "</td>";
+					echo "<td>" . $value->Description . "</td>";
+					echo "</tr>";
 				}
 			?>
 		</table>
@@ -83,31 +86,29 @@
 				<td><b>IP</b></td>
 			</tr>
 			<?php
-				if (isset($_POST["name"]))
-				{
-					foreach($colPrinters as $value)
-					{ //Step through them all
-						echo "<tr>";
-						echo "<td>" . $value->Name . "</td>";
-						echo "<td>" . $value->DriverName . "</td>";
-						echo "<td>" .$value->PortName . "</td>";
-						echo "</tr>";
-					}
+				foreach($colPrinters as $value)
+				{ //Step through them all
+					echo "<tr>";
+					echo "<td>" . $value->Name . "</td>";
+					echo "<td>" . $value->DriverName . "</td>";
+					echo "<td>" .$value->PortName . "</td>";
+					echo "</tr>";
 				}
 			?>
 		</table>
 		
 		<?php
-			if (isset($_POST["name"]))
+			echo "<h2> Logged on User</h2>";
+			$i = 0;
+			foreach ($getUsers as $user)
 			{
-				echo "<h2> Logged on Users (Locally and not locked)</h2>";
-				$objWMIService = new COM("winmgmts:\\\\" . $machine) or Die ("Unable to connect to machine, rights issue?"); //Connect to the machine we want the information off of
-				$getUsers = $objWMIService->ExecQuery("Select UserName from Win32_ComputerSystem");
-				foreach ($getUsers as $user)
-					echo $user->UserName;
-				
+				echo $user->UserName;
+				$i++;
 			}
-			
+			if ($i <=1)
+			{
+				echo "No locally active user is currently on the machine.";
+			}
 		?>
 	</div>
 </html>
