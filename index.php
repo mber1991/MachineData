@@ -1,10 +1,5 @@
 <html>
 	
-	<head>
-	<script src="js/jquery-2.0.3.min.js"></script>
-	<script type="text/javascript" src="js/script.js"></script>
-	</head>
-	
 	<form action="#" method="post">
 	Machine Name: <input type="text" name="name"><br>
 	<input type="submit">
