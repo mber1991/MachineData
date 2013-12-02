@@ -32,11 +32,14 @@
 				$objWMIService = new COM("winmgmts:\\\\" . $machine . "\\root\cimv2") or die("Unable to connect to machine");
 				$colItems = $objWMIService->ExecQuery("Select * From Win32_NetworkAdapterConfiguration Where IPEnabled = True"); //Fetch items that will contain mac information
 				$colPrinters = $objWMIService->ExecQuery("Select * From Win32_Printer"); //Query that machine for a list of all printers
-			
+				
+				//User History
+				$colUsers = $objWMIService->ExecQuery("Select * From Win32_NetworkLoginProfile");
+				
 			} catch (Exception $e) {
-				exit($e->getMessage() . "\n The computer may be offline, disconnected, or typed incorrectly.");
+				exit($e->getMessage() . " The computer may be offline, disconnected, or typed incorrectly.");
 			}
-		}
+		} else exit();
 	?>
 	
 	<div id="info">
@@ -110,5 +113,26 @@
 				echo "No locally active user is currently on the machine.";
 			}
 		?>
+		<br>
+		
+		<h2> User Profiles </h2>
+		<table border = "1">
+			<tr>
+				<td><b>EUID</b></td>
+			</tr>
+			<?php
+				
+				foreach ($colUsers as $user)
+				{
+					if ($user->Name != null && substr($user->Name,0,3) == "UNT")
+					{
+						echo "<tr>";
+						echo "<td>" . $user->Name . "</td>";
+						echo "</tr>";
+					}
+				}
+				
+			?>
+		</table>
 	</div>
 </html>
