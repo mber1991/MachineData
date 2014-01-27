@@ -1,5 +1,11 @@
 <html>
 	
+	<head>
+	<script src="js/jquery-2.0.3.min.js"></script>
+	<script type="text/javascript" src="js/script.js"></script>
+	</head>
+	
+	<h1> Dev Page </h1>
 	<form action="#" method="post">
 	Machine Name: <input type="text" name="name"><br>
 	<input type="submit">
@@ -30,6 +36,25 @@
 				
 				//User History
 				$colUsers = $objWMIService->ExecQuery("Select * From Win32_NetworkLoginProfile");
+				
+				//Installed Programs
+				define('HKEY_LOCAL_MACHINE', 0x80000002);
+				$strKey = "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall";
+				$strEntry1a = "DisplayName"; 
+				$strEntry1b = "QuietDisplayName"; 
+				$strEntry2 = "InstallDate"; 
+				$strEntry3 = "VersionMajor";
+				$strEntry4 = "VersionMinor"; 
+				$strEntry5 = "EstimatedSize";
+				$strValue1 = $strValue2 = $strValue3 = $strValue4 = 0;
+				
+				$reg = new COM("winmgmts:{impersonationLevel=impersonate}!\\\\{$machine}\\root\\default:StdRegProv");
+
+				//$key_path = 'SOFTWARE\Microsoft'; // this line will get all services
+				$key_path = 'Software\Microsoft\Windows\CurrentVersion\Uninstall'; // this line will get all installed software
+
+				$sub_keys = new VARIANT();
+				$reg->EnumKey(HKEY_LOCAL_MACHINE,$key_path,$sub_keys);
 				
 			} catch (Exception $e) {
 				exit($e->getMessage() . " The computer may be offline, disconnected, or typed incorrectly.");
@@ -103,10 +128,6 @@
 				echo $user->UserName;
 				$i++;
 			}
-			if ($i <=1)
-			{
-				echo "No locally active user is currently on the machine.";
-			}
 		?>
 		<br>
 		
@@ -129,5 +150,20 @@
 				
 			?>
 		</table>
+		<br>
+		
+		<h2> Programs List (Massive) </h2>
+		<table border = "1">
+		<tr>
+			<td><b>Name</b></td>
+		</tr>
+		<?php
+			foreach($sub_keys as $sub_key){
+				$intRet1 = $reg->GetStringValue(HKEY_LOCAL_MACHINE, $strKey . $sub_key, $strEntry1a, $strValue1);
+				echo "<tr>";
+				echo "<td>" . $sub_key . "</td>";
+				echo "</tr>";
+			}
+		?>
 	</div>
 </html>
